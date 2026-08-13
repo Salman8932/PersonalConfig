@@ -159,24 +159,51 @@ else {
 
 Write-Host "`n=== Installing Neovim configuration ===" -ForegroundColor Cyan
 
-$nvimSource = Join-Path $PSScriptRoot "nvim"
-$nvimTarget = Join-Path $env:LOCALAPPDATA "nvim"
+$NVIM_REPO_CONFIG= "$PSScriptRoot\nvim"
+$NVIM_LOCAL_CONFIG= "$env:LOCALAPPDATA\nvim"
 
-if (Test-Path $nvimSource) {
-
-    New-Item -ItemType Directory -Path $nvimTarget -Force | Out-Null
-
-    Copy-Item `
-        -Path "$nvimSource\*" `
-        -Destination $nvimTarget `
-        -Recurse `
-        -Force
-
-    Write-Host "Neovim configuration copied." -ForegroundColor Green
-}
-else {
+if (-not (Test-Path $NVIM_REPO_CONFIG)) {
     Write-Warning "Neovim configuration folder not found:"
-    Write-Warning $nvimSource
+    Write-Warning "$NVIM_REPO_CONFIG"
+}
+
+else{
+if (Test-Path $NVIM_LOCAL_CONFIG){
+
+	Write-Host "Existing Neovim configuration found." -ForegroundColor Yellow
+
+	$NVIM_PATH_ITEM = Get-Item $NVIM_LOCAL_CONFIG -Force
+
+	if ($NVIM_PATH_ITEM.Linktype) {
+		#Already a symlink
+		Write-Host "Existing symlink found. Removing it..." -ForegroundColor Yellow
+
+		Remove-Item $NVIM_LOCAL_CONFIG -Force
+	}
+
+	else {
+		#Normal directory
+		$BACKUP_NVIM_CONFIG = "$NVIM_LOCAL_CONFIG.backup"
+		Write-Host "Existing directory found." -ForegroundColor Yellow
+		Write-Host "Backing it up to $BACKUP_NVIM_CONFIG"
+
+	# If an old backup exists, don't overwrite it
+        if (Test-Path $BACKUP_NVIM_CONFIG) {
+            Write-Warning "Backup already exists: $BACKUP_NVIM_CONFIG"
+            Write-Warning "Merging"
+        }
+
+        Rename-Item $NVIM_LOCAL_CONFIG $BACKUP_NVIM_CONFIG -Force
+	}
+     }
+
+     New-Item `
+     	-ItemType SymbolicLink `
+	-Path $NVIM_LOCAL_CONFIG `
+	-TARGET $NVIM_REPO_CONFIG `
+	| Out-Null
+
+     Write-Host "Neovim configuration linked." -ForegroundColor Green
 }
 
 # ============================================================
@@ -192,8 +219,7 @@ if (Test-Path $psSource) {
 
     New-Item -ItemType Directory -Path $psTarget -Force | Out-Null
 
-    Copy-Item `
-        -Path "$psSource\*" `
+    Copy-Item ` -Path "$psSource\*" `
         -Destination $psTarget `
         -Recurse `
         -Force
