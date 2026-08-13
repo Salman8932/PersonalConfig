@@ -13,6 +13,12 @@ vim.keymap.set("n", "<leader>ffc", function()
 	desc = "go to config file directory",
 })
 
+vim.keymap.set("n", "<leader>gc", function()
+	telebuiltin.live_grep()
+	end, {
+	desc = "Live grep search",
+})
+
 vim.keymap.set('n', '<leader>m', function()
   telebuiltin.marks({
     layout_strategy = 'bottom_pane',

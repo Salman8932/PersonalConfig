@@ -1,5 +1,4 @@
 $ErrorActionPreference = "Stop"
-
 Write-Host "`n=== Windows Development Bootstrap ===" -ForegroundColor Cyan
 
 # ============================================================
@@ -44,6 +43,23 @@ function Install-ScoopPackage {
     }
 }
 
+function Install-PythonPackage {
+    param (
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    python -c "import $Name" 2>$null
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "$Name already installed." -ForegroundColor Green
+    }
+    else {
+        Write-Host "$Name not found. Installing..." -ForegroundColor Yellow
+        python -m pip install --upgrade $Name
+    }
+}
+
 # ============================================================
 # Dependencies
 # ============================================================
@@ -55,7 +71,9 @@ Write-Host "`n=== Dependencies ===" -ForegroundColor Cyan
 
 
 # Python
-# Windows may expose a fake Python executable through
+# Windows may expose a
+#
+# fake Python executable through
 # the Microsoft Store App Execution Alias.
 $python = Get-Command python -ErrorAction SilentlyContinue
 
@@ -81,6 +99,31 @@ Install-ScoopPackage "fd" "fd"
 # SumatraPDF
 Install-ScoopPackage "sumatrapdf" "sumatrapdf"
 
+#Format and LSP
+Install-ScoopPackage "stylua" "stylua"
+
+if (Get-Command prettier -ErrorAction SilentlyContinue) {
+    Write-Host "Prettier already installed." -ForegroundColor Green
+}
+else {
+    Write-Host "Prettier not found. Installing..." -ForegroundColor Yellow
+    npm install -g prettier
+}
+
+if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+
+    Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Cyan
+
+    if ((Get-PSRepository -Name PSGallery).InstallationPolicy -ne "Trusted") {
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+    }
+
+    Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+}
+else {
+    Write-Host "PSScriptAnalyzer already installed." -ForegroundColor Green
+}
+
 # ============================================================
 # Refresh PATH
 # ============================================================
@@ -105,20 +148,9 @@ if (-not $python) {
 
 Write-Host "Python: $($python.Source)" -ForegroundColor Green
 
-try {
-    python -c "import pynvim" 2>$null
-
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "pynvim already installed." -ForegroundColor Green
-    }
-    else {
-        throw
-    }
-}
-catch {
-    Write-Host "pynvim not found. Installing..." -ForegroundColor Yellow
-    python -m pip install --upgrade pynvim
-}
+Install-PythonPackage "pynvim"
+Install-PythonPackage "black"
+Install-PythonPackage "isort"
 
 # ============================================================
 # Yazi file(1) support
@@ -167,7 +199,8 @@ if (-not (Test-Path $NVIM_REPO_CONFIG)) {
     Write-Warning "$NVIM_REPO_CONFIG"
 }
 
-else{
+else {
+
 if (Test-Path $NVIM_LOCAL_CONFIG){
 
 	Write-Host "Existing Neovim configuration found." -ForegroundColor Yellow
@@ -247,7 +280,11 @@ $commands = @(
     "npm",
     "rg",
     "fd",
-    "sumatrapdf"
+    "sumatrapdf",
+    "stylua"
+    "black",
+    "isort"
+    "prettier"`
 )
 
 foreach ($command in $commands) {
