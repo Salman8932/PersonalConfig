@@ -1,1 +1,1 @@
-vim.cmd("cd C:/Users/charg/Documents")
+vim.cmd("cd " .. vim.fn.expand("~/Documents"))
