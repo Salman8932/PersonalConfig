@@ -1,7 +1,7 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
-vim.g.python3_host_prog = [[C:\Users\charg\AppData\Local\Programs\Python\Python312\python.exe]]
+vim.g.python3_host_prog = vim.fn.exepath("python")
 
 
 require("config.lazy")
