@@ -10,6 +10,10 @@ return {
 			javascript = { "prettierd", "prettier", stop_after_first = true },
 
 			ps1 = { "powershell" },
+
+			tex = { "latexindent" },
+			latex = { "latexindent" },
+			plaintex = { "latexindent" },
 		},
 
 		format_on_save = {
@@ -26,6 +30,9 @@ return {
 					"$input | Invoke-Formatter",
 				},
 				stdin = true,
+			},
+			latexindent = {
+				prepend_args = { "-g", "/dev/null" },
 			},
 		},
 	},

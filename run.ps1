@@ -96,11 +96,17 @@ Install-ScoopPackage "nodejs" "node"
 Install-ScoopPackage "ripgrep" "rg"
 Install-ScoopPackage "fd" "fd"
 
+#Latex and Perl
+Install-ScoopPackage "latex" "pdflatex"
+Install-ScoopPackage "perl" "perl"
+
 # SumatraPDF
 Install-ScoopPackage "sumatrapdf" "sumatrapdf"
 
 #Format and LSP
 Install-ScoopPackage "stylua" "stylua"
+
+
 
 if (Get-Command prettier -ErrorAction SilentlyContinue) {
     Write-Host "Prettier already installed." -ForegroundColor Green
@@ -189,8 +195,71 @@ else {
 # Copy Neovim configuration
 # ============================================================
 
-Write-Host "`n=== Installing Neovim configuration ===" -ForegroundColor Cyan
+function Deploy-ConfigFile {
+    param (
+        [Parameter(Mandatory)]
+        [string]$CONFIG_FILE,
+	
+        [Parameter(Mandatory)]
+        [string]$NAME
+    )
+Write-Host "`n=== Installing " + $NAME + " configuration ===" -ForegroundColor Cyan
 
+$REPO_CONFIG= "$PSScriptRoot\" + $CONFIG_FILE
+$LOCAL_CONFIG= "$env:LOCALAPPDATA" + $CONFIG_FIlE
+
+if (-not (Test-Path $REPO_CONFIG)) {
+    Write-Warning "$NAME" + " configuration folder not found:"
+    Write-Warning "$REPO_CONFIG"
+}
+
+else {
+
+if (Test-Path $LOCAL_CONFIG){
+
+	Write-Host "Existing " + $NAME + " configuration found." -ForegroundColor Yellow
+
+	$PATH_ITEM = Get-Item $LOCAL_CONFIG -Force
+
+	if ($PATH_ITEM.Linktype) {
+		#Already a symlink
+		Write-Host "Existing symlink found. Removing it..." -ForegroundColor Yellow
+
+		Remove-Item $LOCAL_CONFIG -Force
+	}
+
+	else {
+		#Normal directory
+		$BACKUP_CONFIG = "$LOCAL_CONFIG.backup"
+		Write-Host "Existing directory found." -ForegroundColor Yellow
+		Write-Host "Backing it up to $BACKUP_CONFIG"
+
+	# If an old backup exists, don't overwrite it
+        if (Test-Path $BACKUP_CONFIG) {
+            Write-Warning "Backup already exists: $BACKUP_CONFIG"
+            Write-Warning "Merging"
+        }
+
+        Rename-Item $LOCAL_CONFIG $BACKUP_CONFIG -Force
+	}
+     }
+
+     New-Item `
+     	-ItemType SymbolicLink `
+	-Path $LOCAL_CONFIG `
+	-TARGET $REPO_CONFIG `
+	| Out-Null
+
+     Write-Host $NAME + " configuration linked." -ForegroundColor Green
+}
+
+
+  Write-Host "`n=== Installing " + "$NAME" + " configuration ===" -ForegroundColor Cyan
+
+}
+
+Deploy-ConfigFile "nvim" "Neovim"
+<#
 $NVIM_REPO_CONFIG= "$PSScriptRoot\nvim"
 $NVIM_LOCAL_CONFIG= "$env:LOCALAPPDATA\nvim"
 
@@ -238,6 +307,7 @@ if (Test-Path $NVIM_LOCAL_CONFIG){
 
      Write-Host "Neovim configuration linked." -ForegroundColor Green
 }
+#>
 
 # ============================================================
 # Copy PowerShell configuration

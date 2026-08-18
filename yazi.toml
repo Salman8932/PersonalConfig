@@ -1,0 +1,9 @@
+[opener]
+edit = [
+    { run = 'nvim "%s"', block = true, for = "windows" }
+]
+
+[open]
+prepend_rules = [
+    { mime = "text/*", use = "edit" }
+]
