@@ -51,7 +51,7 @@ function Install-PythonPackage {
 
     python -c "import $Name" 2>$null
 
-    if ($LASTEXITCODE -eq 0) {
+    if (($LASTEXITCODE -eq 0) -or (Get-Command $Name -ErrorAction SilentlyContinue)) {
         Write-Host "$Name already installed." -ForegroundColor Green
     }
     else {
@@ -157,6 +157,8 @@ Write-Host "Python: $($python.Source)" -ForegroundColor Green
 Install-PythonPackage "pynvim"
 Install-PythonPackage "black"
 Install-PythonPackage "isort"
+Install-PythonPackage "ipython"
+Install-PythonPackage "micro-editor"
 
 # ============================================================
 # Yazi file(1) support
@@ -192,7 +194,7 @@ else {
 }
 
 # ============================================================
-# Copy Neovim configuration
+# Configuration Helper
 # ============================================================
 
 function Deploy-ConfigFile {
@@ -203,10 +205,29 @@ function Deploy-ConfigFile {
         [Parameter(Mandatory)]
         [string]$NAME
     )
-Write-Host "`n=== Installing " + $NAME + " configuration ===" -ForegroundColor Cyan
 
-$REPO_CONFIG= "$PSScriptRoot\" + $CONFIG_FILE
-$LOCAL_CONFIG= "$env:LOCALAPPDATA" + $CONFIG_FIlE
+  Write-Host "`n=== Installing"  "$NAME"  "configuration ===" -ForegroundColor Cyan
+$REPO_CONFIG= "$PSScriptRoot\"
+$LOCAL_CONFIG = $null
+
+switch($CONFIG_FILE) {
+"nvim" {
+	$LOCAL_CONFIG = "$env:LOCALAPPDATA" + $CONFIG_FIlE
+	$REPO_CONFIG = $REPO_CONFIG + $CONFIG_FIlE
+	break
+ }
+
+"yazi" {
+	$LOCAL_CONFIG = "$env:AppData\yazi\config\yazi.toml"
+	$REPO_CONFIG = $REPO_CONFIG + "yazi.toml"
+	break
+ }
+"pwsh" {
+	$LOCAL_CONFIG = Split-Path $PROFILE
+	$REPO_CONFIG = $REPO_CONFIG + "powershell"
+	break
+ }
+}
 
 if (-not (Test-Path $REPO_CONFIG)) {
     Write-Warning "$NAME" + " configuration folder not found:"
@@ -215,7 +236,7 @@ if (-not (Test-Path $REPO_CONFIG)) {
 
 else {
 
-if (Test-Path $LOCAL_CONFIG){
+if (($LOCAL_CONFIG -ne $null) -and (Test-Path $LOCAL_CONFIG)){
 
 	Write-Host "Existing " + $NAME + " configuration found." -ForegroundColor Yellow
 
@@ -254,85 +275,44 @@ if (Test-Path $LOCAL_CONFIG){
 }
 
 
-  Write-Host "`n=== Installing " + "$NAME" + " configuration ===" -ForegroundColor Cyan
 
 }
 
+#Copy Neovim Configuration
 Deploy-ConfigFile "nvim" "Neovim"
-<#
-$NVIM_REPO_CONFIG= "$PSScriptRoot\nvim"
-$NVIM_LOCAL_CONFIG= "$env:LOCALAPPDATA\nvim"
 
-if (-not (Test-Path $NVIM_REPO_CONFIG)) {
-    Write-Warning "Neovim configuration folder not found:"
-    Write-Warning "$NVIM_REPO_CONFIG"
-}
+#Copy Yazi Configuration
+Deploy-ConfigFile "yazi" "Yazi"
 
-else {
-
-if (Test-Path $NVIM_LOCAL_CONFIG){
-
-	Write-Host "Existing Neovim configuration found." -ForegroundColor Yellow
-
-	$NVIM_PATH_ITEM = Get-Item $NVIM_LOCAL_CONFIG -Force
-
-	if ($NVIM_PATH_ITEM.Linktype) {
-		#Already a symlink
-		Write-Host "Existing symlink found. Removing it..." -ForegroundColor Yellow
-
-		Remove-Item $NVIM_LOCAL_CONFIG -Force
-	}
-
-	else {
-		#Normal directory
-		$BACKUP_NVIM_CONFIG = "$NVIM_LOCAL_CONFIG.backup"
-		Write-Host "Existing directory found." -ForegroundColor Yellow
-		Write-Host "Backing it up to $BACKUP_NVIM_CONFIG"
-
-	# If an old backup exists, don't overwrite it
-        if (Test-Path $BACKUP_NVIM_CONFIG) {
-            Write-Warning "Backup already exists: $BACKUP_NVIM_CONFIG"
-            Write-Warning "Merging"
-        }
-
-        Rename-Item $NVIM_LOCAL_CONFIG $BACKUP_NVIM_CONFIG -Force
-	}
-     }
-
-     New-Item `
-     	-ItemType SymbolicLink `
-	-Path $NVIM_LOCAL_CONFIG `
-	-TARGET $NVIM_REPO_CONFIG `
-	| Out-Null
-
-     Write-Host "Neovim configuration linked." -ForegroundColor Green
-}
-#>
-
+#Copy Powershell configuration
+Deploy-ConfigFile "pwsh" "PowerShell"
 # ============================================================
 # Copy PowerShell configuration
 # ============================================================
 
-Write-Host "`n=== Installing PowerShell configuration ===" -ForegroundColor Cyan
 
-$psSource = Join-Path $PSScriptRoot "powershell"
-$psTarget = Split-Path $PROFILE
+<#
+write-host "`n=== installing powershell configuration ===" -foregroundcolor cyan
 
-if (Test-Path $psSource) {
+$pssource = join-path $psscriptroot "powershell"
+$pstarget = split-path $profile
 
-    New-Item -ItemType Directory -Path $psTarget -Force | Out-Null
+if (test-path $pssource) {
 
-    Copy-Item ` -Path "$psSource\*" `
-        -Destination $psTarget `
-        -Recurse `
-        -Force
+    new-item -itemtype directory -path $pstarget -force | out-null
 
-    Write-Host "PowerShell configuration copied." -ForegroundColor Green
+    copy-item ` -path "$pssource\*" `
+        -destination $pstarget `
+        -recurse `
+        -force
+
+    write-host "powershell configuration copied." -foregroundcolor green
 }
 else {
-    Write-Warning "PowerShell configuration folder not found:"
-    Write-Warning $psSource
+    write-warning "powershell configuration folder not found:"
+    write-warning $pssource
 }
+#>
 
 # ============================================================
 # Verification
@@ -353,8 +333,10 @@ $commands = @(
     "sumatrapdf",
     "stylua"
     "black",
-    "isort"
-    "prettier"`
+    "isort",
+    "prettier",
+    "ipython",
+    "micro"`
 )
 
 foreach ($command in $commands) {
