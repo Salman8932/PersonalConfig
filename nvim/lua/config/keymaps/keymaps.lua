@@ -63,3 +63,8 @@ vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]], { silent = true })
 vim.keymap.set("n", "<leader>ru", "<cmd>call UltiSnips#RefreshSnippets()<CR>", {
 	desc = "Reload Ultisnips",
 })
+
+vim.keymap.set("n", "<leader>pc", function()
+	vim.cmd(":w")
+	vim.cmd("!python %")
+end, { desc = "Run python file" })

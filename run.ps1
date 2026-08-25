@@ -86,6 +86,7 @@ else {
 }
 
 # Build tools
+Install-ScoopPackage "nvim" "nvim"
 Install-ScoopPackage "make" "make"
 Install-ScoopPackage "gcc" "gcc"
 
@@ -336,6 +337,7 @@ $commands = @(
     "isort",
     "prettier",
     "ipython",
+    "nvim",
     "micro"`
 )
 
