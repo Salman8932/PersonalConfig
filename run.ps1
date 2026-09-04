@@ -21,6 +21,69 @@ if (-not (scoop bucket list | Select-String "^extras")) {
     scoop bucket add extras
 }
 
+# ===== PowerShell =====
+Write-Host "`n=== Checking PowerShell ===" -ForegroundColor Cyan
+
+winget list --id Microsoft.PowerShell -e | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "PowerShell not found. Installing..." -ForegroundColor Yellow
+    winget install --id Microsoft.PowerShell --source winget -e
+} else {
+    Write-Host "PowerShell already installed. Skipping." -ForegroundColor Green
+}
+
+
+# ===== NerdFont =====
+Write-Host "`n=== Checking NerdFont (JetBrainsMono) ===" -ForegroundColor Cyan
+
+$fontName = "JetBrainsMono Nerd Font"
+$fontInstalled = (New-Object System.Drawing.Text.InstalledFontCollection).Families |
+    Where-Object { $_.Name -like "*JetBrainsMono*" }
+
+if (-not $fontInstalled) {
+    Write-Host "$fontName not found. Installing..." -ForegroundColor Yellow
+
+    Install-PSResource -Name NerdFonts -TrustRepository
+    Import-Module -Name NerdFonts
+    Install-NerdFont -Name 'JetBrainsMono'
+
+    # Re-check after install to get the exact registered name
+    $fontInstalled = (New-Object System.Drawing.Text.InstalledFontCollection).Families |
+        Where-Object { $_.Name -like "*JetBrainsMono*" }
+} else {
+    Write-Host "$fontName already installed. Skipping." -ForegroundColor Green
+}
+
+if (-not $fontInstalled) {
+    Write-Warning "Font install may have failed — no matching family found after install."
+} else {
+    $actualFontName = $fontInstalled[0].Name
+    Write-Host "Using font: $actualFontName" -ForegroundColor Green
+
+    # ===== Patch Windows Terminal settings.json =====
+    Write-Host "`n=== Configuring Windows Terminal ===" -ForegroundColor Cyan
+
+    $settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+
+    if (-not (Test-Path $settingsPath)) {
+        Write-Warning "Windows Terminal settings.json not found at $settingsPath — skipping font config."
+    } else {
+        $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+
+        if (-not $settings.profiles.defaults) {
+            $settings.profiles | Add-Member -MemberType NoteProperty -Name defaults -Value ([PSCustomObject]@{})
+        }
+
+        $currentFont = $settings.profiles.defaults.font.face
+        if ($currentFont -eq $actualFontName) {
+            Write-Host "Terminal already using $actualFontName. Skipping." -ForegroundColor Green
+        } else {
+            $settings.profiles.defaults | Add-Member -MemberType NoteProperty -Name font -Value ([PSCustomObject]@{ face = $actualFontName }) -Force
+            $settings | ConvertTo-Json -Depth 32 | Set-Content $settingsPath
+            Write-Host "Terminal font set to $actualFontName." -ForegroundColor Green
+        }
+    }
+}
 # ============================================================
 # Helper
 # ============================================================
@@ -86,7 +149,7 @@ else {
 }
 
 # Build tools
-Install-ScoopPackage "nvim" "nvim"
+Install-ScoopPackage "neovim" "nvim"
 Install-ScoopPackage "make" "make"
 Install-ScoopPackage "gcc" "gcc"
 
@@ -106,6 +169,7 @@ Install-ScoopPackage "sumatrapdf" "sumatrapdf"
 
 #Format and LSP
 Install-ScoopPackage "stylua" "stylua"
+Install-ScoopPackage "yazi" "yazi"
 
 
 
@@ -213,7 +277,7 @@ $LOCAL_CONFIG = $null
 
 switch($CONFIG_FILE) {
 "nvim" {
-	$LOCAL_CONFIG = "$env:LOCALAPPDATA" + $CONFIG_FIlE
+	$LOCAL_CONFIG = "$env:LOCALAPPDATA\" + $CONFIG_FIlE
 	$REPO_CONFIG = $REPO_CONFIG + $CONFIG_FIlE
 	break
  }
@@ -229,6 +293,7 @@ switch($CONFIG_FILE) {
 	break
  }
 }
+
 
 if (-not (Test-Path $REPO_CONFIG)) {
     Write-Warning "$NAME" + " configuration folder not found:"
@@ -265,6 +330,12 @@ if (($LOCAL_CONFIG -ne $null) -and (Test-Path $LOCAL_CONFIG)){
         Rename-Item $LOCAL_CONFIG $BACKUP_CONFIG -Force
 	}
      }
+
+     #Create the file path if it doesnt exist
+     $PARENT_DIR = Split-Path $LOCAL_CONFIG -Parent
+if (-not (Test-Path $PARENT_DIR)) {
+    New-Item -ItemType Directory -Path $PARENT_DIR -Force | Out-Null
+}
 
      New-Item `
      	-ItemType SymbolicLink `
