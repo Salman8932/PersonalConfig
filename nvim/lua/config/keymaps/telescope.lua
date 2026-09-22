@@ -6,11 +6,11 @@ end, {
 	desc = "[S]earch [F]iles",
 })
 
-vim.keymap.set("n", "<leader>scf", function()
+vim.keymap.set("n", "<leader>sfc", function()
 	vim.cmd.cd(vim.fn.stdpath("config"))
 	telebuiltin.find_files()
 end, {
-	desc = "[S]earch [C]onfig [F]iles",
+	desc = "[S]earch [F]iles [C]onfig",
 })
 
 vim.keymap.set("n", "<leader>sg", function()

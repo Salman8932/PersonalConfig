@@ -68,3 +68,6 @@ vim.keymap.set("n", "<leader>pc", function()
 	vim.cmd(":w")
 	vim.cmd("!python %")
 end, { desc = "[P]ython [C]ompile" })
+
+vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Scroll down and center cursor" })
+vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up and center cursor" })

@@ -112,6 +112,7 @@ function Install-PythonPackage {
         [string]$Name
     )
 
+
     python -c "import $Name" 2>$null
 
     if (($LASTEXITCODE -eq 0) -or (Get-Command $Name -ErrorAction SilentlyContinue)) {
@@ -119,6 +120,9 @@ function Install-PythonPackage {
     }
     else {
         Write-Host "$Name not found. Installing..." -ForegroundColor Yellow
+	if($Name = "micro"){
+		$Name = "micro-editor"
+	}
         python -m pip install --upgrade $Name
     }
 }
@@ -223,7 +227,7 @@ Install-PythonPackage "pynvim"
 Install-PythonPackage "black"
 Install-PythonPackage "isort"
 Install-PythonPackage "ipython"
-Install-PythonPackage "micro-editor"
+Install-PythonPackage "micro"
 
 # ============================================================
 # Yazi file(1) support
