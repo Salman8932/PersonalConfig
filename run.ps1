@@ -174,7 +174,7 @@ Install-ScoopPackage "sumatrapdf" "sumatrapdf"
 #Format and LSP
 Install-ScoopPackage "stylua" "stylua"
 Install-ScoopPackage "yazi" "yazi"
-Install-ScoopPackage "llvm@18.1.8" "clang"
+Install-ScoopPackage "main/llvm@18.1.8" "clang"
 Install-ScoopPackage "arduino-cli" "arduino-cli"
 Install-ScoopPackage "go" "go"
 
