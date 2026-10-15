@@ -46,6 +46,12 @@ return {
 				format = lspkind.cmp_format({ mode = "symbol_text", maxwidth = 50 }), -- ✅ lspkind now used
 			},
 		})
+
+		-- 🛑 DISABLE AUTOCOMPLETE FOR LATEX FILETYPES
+		cmp.setup.filetype({ "tex", "latex", "plaintex" }, {
+			sources = {},
+		})
+
 		vim.cmd([[
       set completeopt=menuone,noinsert,noselect
       highlight! default link CmpItemKind CmpItemMenuDefault

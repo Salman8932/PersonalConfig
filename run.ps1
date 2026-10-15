@@ -174,7 +174,18 @@ Install-ScoopPackage "sumatrapdf" "sumatrapdf"
 #Format and LSP
 Install-ScoopPackage "stylua" "stylua"
 Install-ScoopPackage "yazi" "yazi"
+Install-ScoopPackage "llvm@18.1.8" "clang"
+Install-ScoopPackage "arduino-cli" "arduino-cli"
+Install-ScoopPackage "go" "go"
 
+
+    if (-not (Get-Command arduino-language-server -ErrorAction SilentlyContinue)) {
+        Write-Host "arduino-language-server not found. Installing $arduino-language-server..." -ForegroundColor Yellow
+	go install github.com/arduino/arduino-language-server@latest
+    }
+    else {
+        Write-Host "arduino-language-server already installed." -ForegroundColor Green
+    }
 
 
 if (Get-Command prettier -ErrorAction SilentlyContinue) {
