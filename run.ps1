@@ -187,6 +187,7 @@ Install-ScoopPackage "go" "go"
         Write-Host "arduino-language-server already installed." -ForegroundColor Green
     }
 
+arduino-cli core install arduino:avr
 
 if (Get-Command prettier -ErrorAction SilentlyContinue) {
     Write-Host "Prettier already installed." -ForegroundColor Green
